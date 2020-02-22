@@ -11,3 +11,4 @@
 ## 参考引用
 
 * [chrome extensions Getting Started Tutorial](https://developer.chrome.com/extensions/getstarted)
+* [360极速浏览器应用开放平台](http://open.chrome.360.cn/extension_dev/overview.html)
