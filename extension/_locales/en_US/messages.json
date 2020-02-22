@@ -1,0 +1,8 @@
+{
+    "name": {
+        "message": "SyncBookmarks"
+    },
+    "description": {
+        "message": "Sync chrome bookmarks across devices"
+    }
+}

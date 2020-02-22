@@ -1,0 +1,10 @@
+{
+    "name": {
+        "message": "书签同步",
+        "description": "扩展名字"
+    },
+    "description": {
+        "message": "谷歌浏览器书签跨设备同步助手",
+        "description": "扩展描述"
+    }
+}
