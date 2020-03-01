@@ -1,17 +1,16 @@
 {
-    "name": "__MSG_name__",
-    "description": "__MSG_description__",
-    "version": "1.0",
     "manifest_version": 2,
-    "default_locale": "en_US",
-    "background": {
-        "scripts": [
-            "background.js"
-        ],
-        "persistent": false
+    "name": "__MSG_name__",
+    "version": "1.0",
+    "default_locale": "zh_CN",
+    "description": "__MSG_description__",
+    "icons": {
+        "16": "images/get_started16.png",
+        "32": "images/get_started32.png",
+        "48": "images/get_started48.png",
+        "128": "images/get_started128.png"
     },
-    "options_page": "options.html",
-    "page_action": {
+    "browser_action": {
         "default_popup": "popup.html",
         "default_icon": {
             "16": "images/get_started16.png",
@@ -20,16 +19,15 @@
             "128": "images/get_started128.png"
         }
     },
-    "icons": {
-        "16": "images/get_started16.png",
-        "32": "images/get_started32.png",
-        "48": "images/get_started48.png",
-        "128": "images/get_started128.png"
-    },
+    "background": {
+        "scripts": ["background.js"],
+        "persistent": false
+      },
+    "homepage_url": "https://www.alvisisme.com",
     "permissions": [
         "activeTab",
         "bookmarks",
-        "declarativeContent",
         "storage"
-    ]
+    ],
+    "content_security_policy": "script-src 'self' https://ajax.googleapis.com; object-src 'self'"
 }
