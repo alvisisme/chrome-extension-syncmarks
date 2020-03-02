@@ -43,6 +43,10 @@ function Node() {
 let BookmarkTreeNodeList = [];
 const BOOKMARK = 0;
 const BOOKEMAR_FOLDER = 1;
+const PROTO = 'http'
+const SERVER_ADDRESS = '127.0.0.1'
+const SERVER_PORT = '3000'
+const SERVER_URL = `${PROTO}://${SERVER_ADDRESS}:${SERVER_PORT}`
 
 function addToList(node) {
   let bookmarkNode = new Node();
@@ -66,6 +70,7 @@ function addToList(node) {
 }
 
 function getBookmarkList(callback) {
+  BookmarkTreeNodeList = []
   chrome.bookmarks.getTree(function(tree) {
     for (let i = 0; i < tree.length; i++) {
       let node = tree[i];
@@ -76,20 +81,29 @@ function getBookmarkList(callback) {
 }
 
 $("#upload").on("click", function() {
-  getBookmarkList(function(error, list) {
-    for (let i = 0; i < list.length; i++) {
-      $.ajax({
-        type: "POST",
-        url: "http://localhost:3000/bookmarks",
-        data: list[i],
-        success: function(data) {
-          callback(data);
-        }
-      });
-    }
+  getBookmarkList(function(error, bookmarkArray) {
+    $.ajax({
+      type: "POST",
+      url: `${SERVER_URL}/bookmarks`,
+      contentType: 'application/json;charset=utf-8',
+      dataType: 'json',
+      data: JSON.stringify(bookmarkArray),
+      success: function() {
+        console.log('上传了 ' + bookmarkArray.length + ' 条书签')
+      },
+      error: function() {
+        console.error('上传失败')
+      }
+    });
   });
 });
 
 $("#download").on("click", function() {
-  alert("下载");
+  $.ajax({
+    type: "GET",
+    url: `${SERVER_URL}/bookmarks`,
+    success: function(bookmarkArray) {
+     console.log('下载了 ' + bookmarkArray.length + ' 条书签')
+    }
+  });
 });
