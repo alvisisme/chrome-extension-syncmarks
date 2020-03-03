@@ -1,8 +1,6 @@
 const express = require('express');
 const cors = require('cors');
 const app = express();
-const path = require('path');
-const fs = require('fs');
 const port = 3000;
 
 const SUCCESS_CODE = 0
@@ -25,6 +23,7 @@ app.get('/', (req, res) => {
 })
 
 app.get('/bookmarks', function (req, res) {
+  console.log('donwload bookmarks')
   db.get((error, bookmarkArray) => {
     if (error) throw error
     res.json({
@@ -35,12 +34,10 @@ app.get('/bookmarks', function (req, res) {
 })
 
 app.post('/bookmarks', function (req, res) {
-  const bookmarkArray = req.body
-  db.save(bookmarkArray, err => {
-    if (err) throw err
-  })
-  res.json({
-    code: SUCCESS_CODE
+  db.save(req.body, function(err) {
+    res.json({
+      code: SUCCESS_CODE
+    })
   })
 })
 
