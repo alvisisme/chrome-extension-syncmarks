@@ -1,0 +1,7 @@
+version: '2'
+services:
+  swagger-editor:
+    image: swaggerapi/swagger-editor:v3.8.0
+    ports:
+      - 11080:8080
+
