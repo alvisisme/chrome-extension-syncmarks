@@ -7,9 +7,15 @@
     <title>Document</title>
 </head>
 <body style="width: 400px">
+  <div>
+    <span>服务器地址</span>
+    <input id='server' type="text" value='' placeholder="http://192.168.31.161:3000">
+    <button id='connect' type="button" class="btn btn-default">连接服务器</button>
+    <span id='version'></span>
+  </div>
   <button id='download' type="button" class="btn btn-default">恢复</button>
   <button id='upload' type="button" class="btn btn-default">备份</button>
   <button id='test' type="button" class="btn btn-default">测试</button>
-  <script src='./popup.js'></script>
+  <script src='./js/popup.js'></script>
 </body>
 </html>

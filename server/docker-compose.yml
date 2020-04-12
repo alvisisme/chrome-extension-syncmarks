@@ -1,0 +1,51 @@
+version: '3'
+services:
+  mongo:
+    image: mongo:4.2.5
+    container_name: backend-db
+    restart: always
+    networks:
+      - backend
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: P9DeuFJ32d4img==
+      MONGO_INITDB_DATABASE: bookmarks
+    volumes:
+      - /mnt/data/:/data/db
+      - "/etc/timezone:/etc/timezone:ro"
+      - "/etc/localtime:/etc/localtime:ro"
+    ports:
+      - "27017:27017"
+  mongo-express:
+    image: mongo-express
+    container_name: backend-db-web
+    restart: always
+    ports:
+      - 8081:8081
+    networks:
+      - backend
+    environment:
+      ME_CONFIG_MONGODB_ADMINUSERNAME: root
+      ME_CONFIG_MONGODB_ADMINPASSWORD: P9DeuFJ32d4img==
+    volumes:
+      - "/etc/timezone:/etc/timezone:ro"
+      - "/etc/localtime:/etc/localtime:ro"
+    depends_on:
+      - mongo
+  api:
+    build: .
+    image:  backend-api
+    container_name: backend-api
+    restart: always
+    ports:
+      - 3000:3000
+    networks:
+      - backend
+    volumes:
+      - "/etc/timezone:/etc/timezone:ro"
+      - "/etc/localtime:/etc/localtime:ro"
+    depends_on:
+      - mongo
+
+networks:
+  backend:
