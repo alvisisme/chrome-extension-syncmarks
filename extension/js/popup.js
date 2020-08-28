@@ -108,40 +108,45 @@ let serverApi = {};
 
   const getVersion = () => {
     return new Promise((resolve, reject) => {
-      $.getJSON(`${serverAddress}/${API_VERSION}/version`, (response) => {
-        const { code, message, data } = response;
-        if (code === 20000) {
-          resolve(data);
-        } else {
-          reject(new Error(message));
+      const xhttp = new XMLHttpRequest();
+      xhttp.onreadystatechange = function () {
+        if (this.readyState == 4 && this.status == 200) {
+          const result = JSON.parse(this.responseText);
+          resolve(result.data);
         }
-      });
+      };
+      xhttp.open("GET", `${serverAddress}/${API_VERSION}/version`, true);
+      xhttp.send();
     });
   };
 
-  const uploadBookmarks = data => {
+  const uploadBookmarks = (data) => {
     return new Promise((resolve, reject) => {
-      $.post(`${serverAddress}/${API_VERSION}/bookmark`, data, (response) => {
-        const { code, message, data } = response;
-        if (code === 20000) {
-          resolve(data);
-        } else {
-          reject(new Error(message));
+      const xhttp = new XMLHttpRequest();
+      xhttp.open("POST", `${serverAddress}/${API_VERSION}/bookmark`, true);
+      xhttp.setRequestHeader("content-type", "application/json");
+      xhttp.onreadystatechange = function () {
+        if (this.readyState == 4 && this.status == 200) {
+          const result = JSON.parse(this.responseText);
+          resolve(result.data);
         }
-      }, 'json');
+      };
+      //将用户输入值序列化成字符串
+      xhttp.send(JSON.stringify(data));
     });
   };
 
   const downloadBookmarks = () => {
     return new Promise((resolve, reject) => {
-      $.getJSON(`${serverAddress}/${API_VERSION}/bookmark`, (response) => {
-        const { code, message, data } = response;
-        if (code === 20000) {
-          resolve(data);
-        } else {
-          reject(new Error(message));
+      const xhttp = new XMLHttpRequest();
+      xhttp.open("GET", `${serverAddress}/${API_VERSION}/bookmark`, true);
+      xhttp.onreadystatechange = function () {
+        if (this.readyState == 4 && this.status == 200) {
+          const result = JSON.parse(this.responseText);
+          resolve(result.data);
         }
-      });
+      };
+      xhttp.send();
     });
   };
 
@@ -203,7 +208,7 @@ let BookmarkTreeNodeList = [];
 const BOOKMARK = 0;
 const BOOKEMARK_FOLDER = 1;
 const PROTO = "http";
-const SERVER_ADDRESS = "192.168.31.161";
+const SERVER_ADDRESS = "192.168.31.238";
 const SERVER_PORT = "3000";
 const SERVER_URL = `${PROTO}://${SERVER_ADDRESS}:${SERVER_PORT}`;
 
@@ -263,8 +268,11 @@ function tree2List(tree) {
   function add2Map(tree) {
     for (let item of tree) {
       // 给书签文件创建group属性
-      if (item.id === "0" || item.id === "1" || item.id === "2" || typeof item.dateGroupModified === 'number') {
-        item.group = true
+      if (
+        parseInt(item.id) < 3 ||
+        typeof item.dateGroupModified === "number"
+      ) {
+        item.group = true;
       }
       cacheMap[item.id] = item;
       if (Array.isArray(item.children)) {
@@ -339,71 +347,114 @@ function listToMap(bookmarkList) {
 }
 
 async function removeAllBookmarks() {
+  async function removeBookmark(item) {
+    // 不可删除节点
+    if (parseInt(item.id) <= 2) {
+      return;
+    }
+    try {
+      if (Array.isArray(item.children)) {
+        await api.removeTreeAsync(item.id);
+      } else {
+        await api.removeAsync(item.id);
+      }
+      console.log(`remove bookmark "${item.title}" success`);
+    } catch (err) {
+      console.error(`remove bookmark "${item.title}" error`);
+      console.error(err);
+    }
+  }
+  async function dfsRemove(tree) {
+    if (!Array.isArray(tree)) {
+      throw new Error("tree should be an array");
+    }
+    for (let item of tree) {
+      console.log(`checking item ${item.title}`);
+      if (Array.isArray(item.children) && item.children.length > 0) {
+        // 根节点
+        await dfsRemove(item.children);
+      }
+      await removeBookmark(item)
+    }
+  }
   let localTree = await api.getTreeAsync();
+  await dfsRemove(localTree);
 }
 
-async function restore(remoteBookmarkArray) {
+/**
+ * 覆盖同步
+ */
+async function restoreByOverwrite() {
+  let remoteBookmarkArray = await serverApi.downloadBookmarks()
   function getNewbookmarkId(array, parentId) {
-    for (let i = 0; i < array.length; i++) {
-      if (array[i].id === parentId) {
-        return array[i].newId;
+    for (let item of array) {
+      if (item.id === parentId) {
+        return item.newId
       }
     }
   }
-
-  let array = listToMap(remoteBookmarkArray);
-  for (let depth in array) {
-    const bookmarks = array[depth];
-    for (let i = 0; i < bookmarks.length; i++) {
-      const bookmark = bookmarks[i];
-      if (
-        bookmark.root ||
-        bookmark.id === "0" ||
-        bookmark.id === "1" ||
-        bookmark.id === "2"
-      ) {
+  let map = listToMap(remoteBookmarkArray);
+  let maxDepth = Object.keys(map).length
+  for (let depth = 0; depth < maxDepth; depth++) {
+    const bookmarks = map[depth];
+    for (let bookmark of bookmarks) {
+      // 第0层应该自动过滤
+      if (parseInt(bookmark.id) < 3) {
         bookmark.newId = bookmark.id;
         continue;
       }
       try {
+        const newParentId = getNewbookmarkId(map[depth - 1], bookmark.parentId)
         const newBookmark = await api.createAsync({
-          parentId: getNewbookmarkId(array[depth - 1], bookmark.parentId),
+          parentId: newParentId,
           index: bookmark.index,
           title: bookmark.title,
           url: bookmark.url,
         });
         bookmark.newId = newBookmark.id;
-        console.log(
-          `restroe ${bookmark.title}:${bookmark.id} to ${newBookmark.title}:${newBookmark.id}`
-        );
       } catch (error) {
+        console.error(`create bookmark ${bookmark.titel} error`)
         console.error(error);
       }
     }
   }
 }
 
-$("#upload").on("click", async () => {
-  let bookmarkArray = await getBookmarkList();
-  console.log(bookmarkArray)
-  serverApi.uploadBookmarks({
-    bookmarks: bookmarkArray
+const connectButton = document.getElementById("connect")
+if (connectButton) {
+  connectButton.addEventListener("click", async () => {
+    const serverAddress = document.getElementById("server").value || SERVER_URL;
+    serverApi.setServerAddress(serverAddress);
+    const version = await serverApi.getVersion();
+    document.getElementById("version").innerHTML = version;
   });
-});
+}
 
-$("#download").on("click", async () => {
-  const bookmarkArray = await serverApi.downloadBookmarks();
-  console.log(bookmarkArray);
-});
+const uploadButton = document.getElementById("upload")
+if (uploadButton) {
+  uploadButton.addEventListener("click", async () => {
+    let bookmarks = await getBookmarkList();
+    serverApi.uploadBookmarks({ bookmarks });
+  });
+}
 
-$("#test").on("click", async () => {
-  let array = await getBookmarkList();
-  console.log(array);
-});
+// 覆盖同步
+const overwriteSyncButton = document.getElementById("overwriteSync")
+if (overwriteSyncButton) {
+  overwriteSyncButton.addEventListener("click", async () => {
+    return restoreByOverwrite();
+  });
+}
 
-$("#connect").on("click", async () => {
-  const serverAddress = $("#server").val() || SERVER_URL;
-  serverApi.setServerAddress(serverAddress);
-  const version = await serverApi.getVersion();
-  $("#version").html(version);
-});
+const removeButton = document.getElementById("removeAll")
+if (removeButton) {
+  removeButton.addEventListener("click", async () => {
+    await removeAllBookmarks();
+    let bookmarkArray = await getBookmarkList();
+    if (Array.isArray(bookmarkArray) && bookmarkArray.length === 3) {
+      console.log("clear bookmarks success");
+    } else {
+      console.error("clear bookmarks error");
+    }
+  });
+}

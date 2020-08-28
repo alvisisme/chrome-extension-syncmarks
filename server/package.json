@@ -4,8 +4,7 @@
   "main": "bootstrap.js.js",
   "scripts": {
     "start": "node bootstrap.js",
-    "dev": "supervisor bootstrap.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "dev": "supervisor bootstrap.js"
   },
   "author": "",
   "license": "ISC",
@@ -14,6 +13,6 @@
   "dependencies": {
     "cors": "2.8.5",
     "express": "4.17.1",
-    "mongodb": "3.5.4"
+    "nedb": "1.8.0"
   }
 }

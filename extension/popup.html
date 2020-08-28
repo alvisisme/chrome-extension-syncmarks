@@ -3,19 +3,18 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
     <title>Document</title>
 </head>
 <body style="width: 400px">
   <div>
     <span>服务器地址</span>
-    <input id='server' type="text" value='' placeholder="http://192.168.31.161:3000">
+    <input id='server' type="text" value='http://192.168.31.238:3000' placeholder="http://192.168.31.161:3000">
     <button id='connect' type="button" class="btn btn-default">连接服务器</button>
     <span id='version'></span>
   </div>
-  <button id='download' type="button" class="btn btn-default">恢复</button>
+  <button id='overwriteSync' type="button" class="btn btn-default">恢复(覆盖模式)</button>
   <button id='upload' type="button" class="btn btn-default">备份</button>
-  <button id='test' type="button" class="btn btn-default">测试</button>
+  <!-- <button id='removeAll' type="button" class="btn btn-default">清空</button> -->
   <script src='./js/popup.js'></script>
 </body>
 </html>

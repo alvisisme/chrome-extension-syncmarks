@@ -23,7 +23,7 @@
         "scripts": ["background.js"],
         "persistent": false
       },
-    "homepage_url": "https://www.alvisisme.com",
+    "homepage_url": "https://github.com/alvisisme",
     "permissions": [
         "activeTab",
         "bookmarks",

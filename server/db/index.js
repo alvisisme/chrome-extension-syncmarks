@@ -1,66 +1,43 @@
-const MongoClient = require("mongodb").MongoClient;
-const assert = require("assert");
-const fs = require("fs");
-const path = require("path");
-const crypto = require("crypto");
+const Datastore = require("nedb");
 
-const config = require("../config");
+var db = new Datastore({
+  filename: "data/bookmarks.db",
+  autoload: true,
+});
 
-const connect = () => {
+const appendBookmarks = (bookmarks) => {
   return new Promise((resolve, reject) => {
-    const url = config.getMongoUrl();
-    MongoClient.connect(url, { useNewUrlParser: true }, (error, client) => {
-      if (error) {
-        reject(error);
+    db.insert({
+      time: Date.now(),
+      bookmarks,
+    }, function(err) {
+      if (err) {
+        reject(err)
       } else {
-        resolve(client);
+        resolve()
       }
     });
-  });
+  })
 };
 
-exports.appendNewRecord = async (data) => {
-  const client = await connect();
-  const db = client.db(config.getMongoDB());
-  const collection = db.collection("bookmarks");
-
+const getLastBookmarks = () => {
   return new Promise((resolve, reject) => {
-    collection.insertOne(
-      {
-        insertTime: Date.now(),
-        bookmarks: data,
-      },
-      function (err, result) {
-        assert.equal(err, null);
+      db.find({}).sort({ time: -1}).limit(1).exec(function (err, docs) {
         if (err) {
-          reject(err);
+          reject(err)
         } else {
-          resolve(result);
+          console.log(docs)
+          if (docs.length > 0) {
+            resolve(docs[0])
+          } else {
+            resolve()
+          }
         }
-      }
-    );
-  });
+      });
+  })
 };
 
-exports.getLatestRecord = async () => {
-  const client = await connect();
-  const db = client.db(config.getMongoDB());
-  const collection = db.collection("bookmarks");
-  return new Promise((resolve, reject) => {
-    resolve([]);
-    collection.aggregate({
-      $group: { _id: '$insertTime' }
-    }, {}, function(error, cursor) {
-      console.log('get latest')
-      assert.equal(err, null);
-      if (error) {
-        reject(error)
-      } else {
-        cursor.toArray(function(err, documents) {
-          console.log(documents)
-          callback(documents);
-        });
-      }
-    });
-  });
+module.exports = {
+  appendBookmarks,
+  getLastBookmarks,
 };

@@ -2,3 +2,4 @@ node_modules/
 database/
 yarn.lock
 package-lock.json
+data/
