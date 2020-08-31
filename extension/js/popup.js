@@ -245,7 +245,7 @@ async function removeAllBookmarks () {
       } else {
         await api.removeAsync(item.id)
       }
-      console.log(`remove bookmark "${item.title}" success`)
+      // console.log(`remove bookmark "${item.title}" success`)
     } catch (err) {
       console.error(`remove bookmark "${item.title}" error`)
       console.error(err)
@@ -256,7 +256,6 @@ async function removeAllBookmarks () {
       throw new Error('tree should be an array')
     }
     for (const item of tree) {
-      console.log(`checking item ${item.title}`)
       if (Array.isArray(item.children) && item.children.length > 0) {
         // 根节点
         await dfsRemove(item.children)
@@ -272,6 +271,7 @@ async function removeAllBookmarks () {
  * 覆盖同步
  */
 async function restoreByOverwrite () {
+  await removeAllBookmarks()
   const remoteBookmarkArray = await serverApi.downloadBookmarks()
   function getNewbookmarkId (array, parentId) {
     for (const item of array) {
@@ -311,10 +311,115 @@ async function restoreByOverwrite () {
  * 合并同步
  */
 async function restoreByMerge () {
-  const remoteBookmarks = await serverApi.downloadBookmarks()
+  let maxId = 0
   const localBookmarks = await api.getBookmarkList()
-  console.log(remoteBookmarks)
-  console.log(localBookmarks)
+  localBookmarks.forEach(bookmark => {
+    if (parseInt(bookmark.id) > maxId) {
+      maxId = parseInt(bookmark.id)
+    }
+  })
+  // 确保远程书签和本地书签的id不一致
+  let remoteBookmarks = await serverApi.downloadBookmarks()
+  remoteBookmarks = remoteBookmarks.filter(bookmark => {
+    if (parseInt(bookmark.id) > 2) {
+      bookmark.id = maxId + parseInt(bookmark.id) + ''
+      if (parseInt(bookmark.parentId) > 2) {
+        bookmark.parentId = maxId + parseInt(bookmark.parentId) + ''
+      }
+      return true
+    }
+    return false
+  })
+
+  const mergedBookmarks = [].concat(remoteBookmarks, localBookmarks)
+  await removeAllBookmarks()
+  // 按照树的层次结构合并同一层级的书签
+  // eslint-disable-next-line no-unused-vars
+  function getNewbookmarkId (array, parentId) {
+    for (const item of array) {
+      if (item.id === parentId) {
+        return item.newId
+      }
+    }
+  }
+  function getSameBookmark (bookmark, bookmarks) {
+    for (const item of bookmarks) {
+      if (item === undefined) {
+        continue
+      }
+      if (item.deleted) {
+        continue
+      }
+      // 同类型，同标题，同url判断为同一个书签
+      if (
+        item.id !== bookmark.id &&
+        item.title === bookmark.title &&
+        item.url === bookmark.url) {
+        return item
+      }
+    }
+  }
+  const map = listToMap(mergedBookmarks)
+  const maxDepth = Object.keys(map).length
+
+  for (let depth = 0; depth < maxDepth; depth++) {
+    const bookmarks = map[depth]
+    for (const index in bookmarks) {
+      const bookmark = bookmarks[index]
+      // 第0层应该自动过滤
+      if (parseInt(bookmark.id) < 3) {
+        bookmark.newId = bookmark.id
+        continue
+      }
+      const sameBookmark = getSameBookmark(bookmark, bookmarks)
+      if (sameBookmark) {
+        // 书签组
+        if (bookmark.url === undefined) {
+          if (depth + 1 < maxDepth) {
+            // 叶子节点中所有节点挂在同类书签上
+            for (const item of map[depth + 1]) {
+              if (item.parentId === bookmark.id) {
+                item.parentId = sameBookmark.id
+              }
+            }
+          }
+        }
+        // 标记为删除
+        bookmark.deleted = true
+      } else {
+        bookmark.deleted = false
+      }
+      map[depth] = map[depth].filter(bookmark => {
+        return !bookmark.deleted
+      })
+    }
+  }
+
+  for (let depth = 0; depth < maxDepth; depth++) {
+    const bookmarks = map[depth]
+    for (const index in bookmarks) {
+      const bookmark = bookmarks[index]
+      if (parseInt(bookmark.id) < 3) {
+        bookmark.newId = bookmark.id
+        continue
+      }
+      // 重新计算index
+      bookmark.index = parseInt(index)
+      try {
+        const newParentId = getNewbookmarkId(map[depth - 1], bookmark.parentId)
+        const newBookmark = await api.createAsync({
+          parentId: newParentId,
+          index: bookmark.index,
+          title: bookmark.title,
+          url: bookmark.url
+        })
+        bookmark.newId = newBookmark.id
+      } catch (error) {
+        console.error(`create bookmark ${bookmark.title} error`)
+        console.error(error)
+      }
+    }
+  }
 }
 
 const connectButton = document.getElementById('connect')
