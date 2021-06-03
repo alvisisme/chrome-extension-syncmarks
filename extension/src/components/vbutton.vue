@@ -1,5 +1,5 @@
 <template>
-  <button class="v-button">
+  <button class="v-button" @click="handleClick">
     <slot></slot>
   </button>
 </template>
@@ -9,6 +9,11 @@ export default {
   name: 'VButton',
   props: {
     msg: String
+  },
+  methods: {
+    handleClick (e) {
+      this.$emit('click', e)
+    }
   }
 }
 </script>

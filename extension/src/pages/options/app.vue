@@ -1,7 +1,7 @@
 <template>
   <div id="app">
     <v-row>
-      <h1>配置页面</h1>
+      <h1>{{name}}配置页面</h1>
     </v-row>
     <v-row>
       配置项
@@ -9,7 +9,7 @@
 
     <v-row>
       <v-col :span=12>
-        <v-button>保存</v-button>
+        <v-button @click="save()">保存</v-button>
       </v-col>
       <v-col :span=12>
         <v-button>取消</v-button>
@@ -22,6 +22,7 @@
 import vRow from '@/components/vrow.vue'
 import vCol from '@/components/vcol.vue'
 import vButton from '@/components/vbutton.vue'
+import dataService from '@/service/data-service'
 
 export default {
   name: 'App',
@@ -29,6 +30,30 @@ export default {
     vRow,
     vCol,
     vButton
+  },
+  data () {
+    return {
+      name: '',
+      num: 0
+    }
+  },
+  methods: {
+    save () {
+      const value = 'aaaa'
+      chrome.storage.local.set({ key: value }, function () {
+        console.log('Value is set to ' + value)
+      })
+
+      chrome.storage.local.get(['key'], function (result) {
+        console.log('Value currently is ' + result.key)
+      })
+      dataService.setUpdatetime(`${this.num++} : ${Date.now()}`)
+      // const bg = chrome.extension.getBackgroundPage()
+      // bg.setUpdateTime(`${this.num++} : ${Date.now()}`)
+    }
+  },
+  created () {
+    this.name = chrome.i18n.getMessage('name')
   }
 }
 </script>

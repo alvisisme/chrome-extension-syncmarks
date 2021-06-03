@@ -19,12 +19,6 @@
       "128": "images/bookmark128.png"
     }
   },
-  "background": {
-    "scripts": [
-      "background.js"
-    ],
-    "persistent": false
-  },
   "options_page": "options.html",
   "homepage_url": "https://github.com/alvisisme",
   "permissions": [

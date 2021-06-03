@@ -13,7 +13,7 @@
 
     <v-row>
       <v-col :span=12>
-        <v-button>上传</v-button>
+        <v-button @click="upload()">上传</v-button>
       </v-col>
       <v-col :span=12>
         <v-button>下载</v-button>
@@ -27,6 +27,7 @@ import vLoading from '@/components/vloading.vue'
 import vRow from '@/components/vrow.vue'
 import vCol from '@/components/vcol.vue'
 import vButton from '@/components/vbutton.vue'
+import dataService from '@/service/data-service'
 
 export default {
   name: 'App',
@@ -41,6 +42,18 @@ export default {
       loading: false,
       updateTime: new Date()
     }
+  },
+  methods: {
+    upload () {
+      dataService.getUpdatetime().then(val => {
+        this.updateTime = val
+      })
+    }
+  },
+  created () {
+    dataService.getUpdatetime().then(val => {
+      this.updateTime = val
+    })
   }
 }
 </script>

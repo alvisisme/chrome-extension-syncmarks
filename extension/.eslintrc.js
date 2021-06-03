@@ -3,6 +3,9 @@ module.exports = {
   env: {
     node: true
   },
+  globals: {
+    chrome: 'readonly'
+  },
   extends: [
     'plugin:vue/essential',
     '@vue/standard'
